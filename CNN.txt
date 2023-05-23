@@ -1,0 +1,105 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sbn
+%matplotlib inline
+
+fashion_train_df = pd.read_csv('fashion-mnist_train.csv')
+fashion_test_df = pd.read_csv('fashion-mnist_test.csv')
+fashion_train_df.head()
+fashion_train_df.tail()
+
+fashion_train_df.shape
+fashion_test_df.shape
+
+training = np.array(fashion_train_df,dtype='float32') 
+testing = np.array(fashion_test_df,dtype='float32')
+
+training.shape
+
+import random
+
+i = random.randint(0,60001)
+plt.imshow(training[i,1:].reshape(28,28))
+label=training[i,1]
+label
+
+height = 7
+width = 7
+fig,axes = plt.subplots(width,height,figsize=(17,17))
+
+height = 7
+width = 7
+fig, axes = plt.subplots(width,height, figsize=(17,17))
+axes = axes.ravel() # this flattens the 15x15 matrix into 225
+n_training = len(training)
+for i in np.arange(0, height*width):
+  index = np.random.randint(0, n_training)
+  axes[i].imshow(training[index, 1:].reshape(28,28))
+  axes[i].set_title(int(training[index, 0]), fontsize=8)
+ axes[i].axis('off')
+ 
+plt.subplots_adjust(hspace=0.5)
+
+X_train = training[:, 1:]/255
+X_test = testing[:, 1:]/255 # Normalizing the data
+y_train = training[:, 0]
+y_test = testing[:, 0]
+
+from sklearn.model_selection import train_test_split
+X_train, X_validate, y_train, y_validate = train_test_split(X_train, 
+y_train, test_size=0.2, random_state=12345) 
+
+X_train = X_train.reshape(X_train.shape[0],*(28,28,1))
+X_test = X_test.reshape(X_test.shape[0],*(28,28,1))
+X_validate = X_validate.reshape(X_validate.shape[0],*(28,28,1))
+
+X_train.shape
+X_test.shape
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Dropout, Dense, Flatten
+from keras.optimizers import Adam
+from keras.callbacks import TensorBoard
+from keras.utils import to_categorical
+
+cnn_model = Sequential()
+cnn_model.add(Conv2D(32,3,3, input_shape=(28,28,1), activation='relu'))
+cnn_model.add(MaxPooling2D(pool_size = (2,2)))
+cnn_model.add(Flatten())
+cnn_model.add(Dense(units=32, activation='relu'))
+cnn_model.add(Dense(units=10, activation='sigmoid'))
+cnn_model.compile(loss='sparse_categorical_crossentropy',optimizer=Adam(learning_rate=0.001), metrics=['accuracy'])
+
+epochs=200
+
+cnn_model.fit(X_train, y_train, batch_size=512, 
+epochs=epochs ,verbose=1, validation_data=(X_validate, y_validate))
+
+
+evaluation = cnn_model.evaluate(X_test, y_test)
+print(" Test Accuracy : {:.3f}".format(evaluation[1]))
+
+predicted_classes = np.argmax(cnn_model.predict(X_test),axis=-1)
+predicted
+
+height = 10
+width = 10
+
+fig, axes = plt.subplots(width, height, figsize=(20,20))
+axes = axes.ravel()
+for i in np.arange(0, height*width):
+ axes[i].imshow(X_test[index].reshape((28,28)))
+ axes[i].set_title("Prediction Class : {1}\n true class : 
+{1}".format(y_test[index],predicted_classes[index]))
+ axes[i].axis('off')
+plt.subplots_adjust( wspace=0.5)
+
+from sklearn.metrics import classification_report
+
+classes =10
+
+targets = ["Class {}".format(i) for i in range(classes)]
+print(classification_report(y_test, predicted_classes, target_names =targets))
